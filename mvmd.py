@@ -3,7 +3,7 @@ import math
 import torch
 
 
-def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, tol=1e-7, N=500):
+def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, tol=1e-7, N=500) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Multivariate Variational Mode Decomposition implemented in PyTorch.
 
