@@ -1,6 +1,8 @@
 # mvmd-pytorch
 Multivariate Variational Mode Decomposition implemented in PyTorch
 
+Reference: https://www.mathworks.com/matlabcentral/fileexchange/72814-multivariate-variational-mode-decomposition-mvmd
+
 # Usage
 ```python
 def mvmd(signal: torch.Tensor, K: int, alpha=2000, tau=0.0, DC=False, init=1, tol=1e-7, N=500):
