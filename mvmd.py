@@ -9,9 +9,9 @@ def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, 
 
     Args:
         signal (torch.Tensor): Input tensor of shape (T, C) where T is signal length and C is channels.
+        K               (int): Number of modes to extract.
         alpha         (float): Bandwidth constraint parameter.
         tau           (float): Time-step for dual ascent (noise slack).
-        K               (int): Number of modes to extract.
         DC             (bool): If True, enforce first mode at DC (zero frequency).
         init            (int): Initialization type for omegas (1=uniform, 2=random, else zeros).
         tol           (float): Convergence tolerance for ADMM.
