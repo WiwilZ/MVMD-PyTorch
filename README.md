@@ -28,10 +28,10 @@ def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, 
 
 # Usage
 ```python
-T = 1000
+B, T = 2, 1000
 t = torch.linspace(1 / T, 1, T, dtype=float)
 f_channel1 = torch.cos(2*torch.pi*2*t) + 1/16*torch.cos(2*torch.pi*36*t)
 f_channel2 = 1/4*torch.cos(2*torch.pi*24*t) + 1/16*torch.cos(2*torch.pi*36*t)
 signal = torch.stack([f_channel1, f_channel2], dim=1)
-u, u_hat, omega = mvmd(signal, 3)
+u, u_hat, omega = mvmd(signal.unsqueeze(0).expand(B, *signal.shape), 3)
 ```
