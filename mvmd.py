@@ -73,19 +73,14 @@ def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, 
     sum_uk = torch.zeros(B, L, C, dtype=ctype, device=device)  # (B, L, C)
     for _ in range(N - 1):
         # update modes
-        s = torch.empty_like(u_hat_plus)  # (B, L, C, K)
-        s[..., 0] = sum_uk + u_hat_prev[..., -1] - u_hat_prev[..., 0]
-        n = (f_hat_plus - 0.5 * lambda_hat).unsqueeze(-1)  # (B, L, C, 1)
-        d = (1 + alpha * (freqs.view(1, -1, 1, 1) - omega_plus[-1].view(1, 1, 1, -1)).square()).reciprocal() # (1, L, 1, K)
-        a = 1 - d[..., :-1]
-        b = torch.addcmul(-u_hat_prev[..., 1:], n, d[..., :-1])
-        for k in range(1, K):
-            s[..., k] = torch.addcmul(b[..., k - 1], a[..., k - 1], s[..., k - 1])
-        sum_uk = s[..., -1]
-        u_hat_plus = (n - s) * d
+        n = f_hat_plus - 0.5 * lambda_hat  # (B, L, C)
+        d = (1 + alpha * (freqs.view(1, L, 1, 1) - omega_plus[-1].view(B, 1, 1, K)).square()).reciprocal() # (1, L, 1, K)
+        for k in range(K):
+            # When k is 0, u_hat_plus[..., k - 1] is u_hat_prev[..., -1].
+            sum_uk += u_hat_plus[..., k - 1] - u_hat_prev[..., k]
+            u_hat_plus[..., k] = (n - sum_uk) * d[..., k]
         # center frequencies
-        z = u_hat_plus[:, L // 2:]
-        power = z.real.square() + z.imag.square() # (B, L/2, C, K)
+        power = u_hat_plus[:, L // 2:].abs().square() # (B, L/2, C, K)
         omega = torch.einsum('l,blck->bk', freqs[L // 2:], power) / (power.sum(dim=(1, 2)) + torch.finfo(dtype).eps)
         if DC:
             omega[:, 0] = 0
@@ -93,8 +88,7 @@ def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, 
         # Dual ascent
         lambda_hat += tau * (u_hat_plus.sum(dim=-1) - f_hat_plus)
         # convergence
-        z = u_hat_plus - u_hat_prev
-        u_diff = (z.real.square() + z.imag.square()).sum().item() / (B * L) + torch.finfo(float).eps
+        u_diff = (u_hat_plus - u_hat_prev).abs().square().sum().item() / (B * L) + torch.finfo(float).eps
         u_hat_prev = u_hat_plus.clone()
         if u_diff <= tol:
             break
@@ -122,9 +116,11 @@ def mvmd(signal: torch.Tensor, K: int, alpha=2000.0, tau=0.0, DC=False, init=1, 
 
 
 if __name__ == "__main__":
-    T = 1000
+    B, T = 2, 1000
     t = torch.linspace(1 / T, 1, T, dtype=float)
     f_channel1 = torch.cos(2*torch.pi*2*t) + 1/16*torch.cos(2*torch.pi*36*t)
     f_channel2 = 1/4*torch.cos(2*torch.pi*24*t) + 1/16*torch.cos(2*torch.pi*36*t)
     signal = torch.stack([f_channel1, f_channel2], dim=1)
-    u, u_hat, omega = mvmd(signal.unsqueeze(0), 3)
+    u, u_hat, omega = mvmd(signal.unsqueeze(0).expand(B, *signal.shape), 3)
+
+u
