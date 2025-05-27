@@ -122,5 +122,3 @@ if __name__ == "__main__":
     f_channel2 = 1/4*torch.cos(2*torch.pi*24*t) + 1/16*torch.cos(2*torch.pi*36*t)
     signal = torch.stack([f_channel1, f_channel2], dim=1)
     u, u_hat, omega = mvmd(signal.unsqueeze(0).expand(B, *signal.shape), 3)
-
-u
